@@ -38,17 +38,14 @@ net
             connection.destroy();
           } else {
             const myAdder = new AddCard(myCollection);
-            myAdder.add(myCard, (err, data) => {
-              if (err)
-                connection.write(
-                  JSON.stringify({ result: "error", message: err }),
-                );
-              else if (data)
-                connection.write(
-                  JSON.stringify({ result: "success", message: data }),
-                );
+
+            myAdder.add(myCard).then((resolve) => {
+              connection.write(JSON.stringify({result: "success", message: resolve}));
               connection.destroy();
-            });
+            }).catch((reject) => {
+              connection.write(JSON.stringify({ result: "error", message: reject}));
+              connection.destroy();
+            })
           }
         });
       } else if (message.operation === "list") {
@@ -132,15 +129,11 @@ net
             connection.destroy();
           } else {
             const myRemover = new DeleteCard(myCollection);
-            myRemover.delete(message.id, (err, data) => {
-              if (err)
-                connection.write(
-                  JSON.stringify({ result: "error", message: err }),
-                );
-              else if (data)
-                connection.write(
-                  JSON.stringify({ result: "success", message: data }),
-                );
+            myRemover.delete(message.id).then((resolve) => {
+              connection.write(JSON.stringify({ result: "success", message: resolve }));
+              connection.destroy();
+            }).catch((reject) => {
+              connection.write(JSON.stringify({ result: "error", message: reject }));
               connection.destroy();
             });
           }
