@@ -2,23 +2,24 @@
 
 [![Tests](https://github.com/ULL-ESIT-INF-DSI-2324/ull-esit-inf-dsi-23-24-prct10-fs-proc-sockets-magic-app-gdiazbricio/actions/workflows/node.js.yml/badge.svg)](https://github.com/ULL-ESIT-INF-DSI-2324/ull-esit-inf-dsi-23-24-prct10-fs-proc-sockets-magic-app-gdiazbricio/actions/workflows/node.js.yml)
 
-[![Coverage Status](https://coveralls.io/repos/github/ULL-ESIT-INF-DSI-2324/ull-esit-inf-dsi-23-24-prct10-fs-proc-sockets-magic-app-gdiazbricio/badge.svg?branch=main)](https://coveralls.io/github/ULL-ESIT-INF-DSI-2324/ull-esit-inf-dsi-23-24-prct10-fs-proc-sockets-magic-app-gdiazbricio?branch=main)
+[![Coverage Status](https://coveralls.io/repos/github/ULL-ESIT-INF-DSI-2324/ull-esit-inf-dsi-23-24-prct11-http-express-magic-app-gdiazbricio/badge.svg?branch=main)](https://coveralls.io/github/ULL-ESIT-INF-DSI-2324/ull-esit-inf-dsi-23-24-prct11-http-express-magic-app-gdiazbricio?branch=main)
 
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ULL-ESIT-INF-DSI-2324_ull-esit-inf-dsi-23-24-prct10-fs-proc-sockets-magic-app-gdiazbricio&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=ULL-ESIT-INF-DSI-2324_ull-esit-inf-dsi-23-24-prct10-fs-proc-sockets-magic-app-gdiazbricio)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ULL-ESIT-INF-DSI-2324_ull-esit-inf-dsi-23-24-prct11-http-express-magic-app-gdiazbricio&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=ULL-ESIT-INF-DSI-2324_ull-esit-inf-dsi-23-24-prct11-http-express-magic-app-gdiazbricio)
 
 ### INFORME: https://ull-esit-inf-dsi-2324.github.io/ull-esit-inf-dsi-23-24-prct10-fs-proc-sockets-magic-app-gdiazbricio/
-# PRÁCTICA 10: DISEÑO DE UNA APLICACIÓN CLIENTE SERVIDOR PARA LA GESTIÓN DE CARTAS MAGIC.
+# PRÁCTICA 11: DISEÑO DE UNA APLICACIÓN EXPRESS SERVIDOR PARA LA GESTIÓN DE CARTAS MAGIC.
 ### Guillermo Díaz Bricio - Desarrollo de Sistemas Informáticos, 3º Grado en Ingeniería Informática
 ## Contenidos:
   * [Contenidos.](#contenidos)
   * [Resumen.](#resumen)
   * [Objetivos.](#objetivos)
   * [Ejercicio propuesto en el guión:](#ejercicio-propuesto-en-el-guión)
+  * [Ejercicio propuesto en el aula:](#ejercicio-propuesto-en-el-aula)
   * [Conclusiones.](#conclusiones)
   * [Bibliografía.](#bibliografía)
 
 ## Resumen:
-En esta práctica se ha realizado una apliación multiusuario cliente servidor, permitiendo gestionar peticiones concurrentes para la gestión de colecciones de cartas Magic de diferentes usuarios. Cada usuario podrá realizar operaciones sobre su colección. Se deberá seguir trabajando con Objetos, Clases, Interfaces, gesitión del sistema de archivos,etcétera. Además de trabajar con la librería `net` que ofrece `node`, la cual permite trabajar con sockets.
+En esta práctica se ha realizado una apliación multiusuario cliente servidor, permitiendo gestionar peticiones concurrentes para la gestión de colecciones de cartas Magic de diferentes usuarios. Cada usuario podrá realizar operaciones sobre su colección. Se deberá seguir trabajando con Objetos, Clases, Interfaces, gesitión del sistema de archivos,etcétera. Además de trabajar con la librería express que ofrece el framework express, la cual permite trabajar con puntos de acceso http.
 ## Objetivos:
 Los objetivos son:
 1. Manejar adecuadamente objetos.
@@ -28,12 +29,10 @@ Los objetivos son:
 1. Creación de documentación automátizada mediante TypeDoc.
 1. Cubrimiento de código mediante c8 y coveralls.
 1. Calidad de código por SonarCloud.
-1. Trabajar con la API del sistema de ficheros de Node.
-1. Trabajar con paquetes de lectura de argumentos como yargs y de formateo de la terminal como chalk.
-1. Aplicar el patrón petición-respuesta.
+1. Trabajar con la librería express.
 
 ## Ejercicio propuesto en el guión:
-En esta práctica se requería diseñar e implementar una aplicación cliente servidor que permitiera a diferentes usuarios manejar su colección de cartas Magic, de manera que cada uno de ellos pueda realizar operaciones sobre la misma.
+En esta práctica se requería diseñar e implementar una aplicación express que permitiera a diferentes usuarios manejar su colección de cartas Magic, de manera que cada uno de ellos pueda realizar operaciones sobre la misma.
 
 En primer lugar, se define la interfaz `Card`, que define la forma que debe tener un objeto de tipo carta Magic
 ```typescript
@@ -291,124 +290,113 @@ Se accede a la carta a modificar, si se encuentra se modifica con la nueva infor
 
 La clase `ShowCard`, no nos centraremos en su implementación, pues es muy similar a la clase `ListCards`, pero simplemente sobre una carta.
 
-En cuanto al código del lado del servidor, tenemos que tener en cuenta que debía ser capaz de saber cuando el cliente ha enviado una petición completa, para que sólo entonces pueda procesarla y devolver una respuesta. No se permitía el uso de la flag `AllowHalfOpen`, por lo que se debía crear un evento personalizado, que se emitiría cuando se haya leído toda la información de la petición del cliente, y luego fuera manejado en el servidor para procesarla.
-
-Es por ello que surge la clase `MessageEventEmitter`, que hereda de la clase `EventEmitter`:
+En cuanto al código del lado del servidor, primero se crea una aplicación express, que se pone a escuchar en el puerto 60300, luego se incluyen las diferentes operaciones crud junto con su implementación.
 ```typescript
-export class MessageEventEmitter extends EventEmitter {
-  constructor(private connection: EventEmitter) {
-    super();
-    let fullData = "";
-    connection.on("data", (dataChunk) => {
-      fullData += dataChunk;
-      let finish = fullData.indexOf("\n");
-      while (finish !== -1) {
-        const message = fullData.substring(0, finish);
-        fullData = fullData.substring(finish + 1);
-        this.emit("message", JSON.parse(message.toString()));
-        finish = fullData.indexOf("\n");
-      }
-    });
-  }
-}
-```
+const app = express();
+app.use(express.json());
 
-Cuando el socket que le pasemos por parámetros reciba un evento data, acumulará los datos en la variable `fullData`, una vez se llegue al final del mensaje (marcado por un "\n"), el objeto emitirá un evento "message", que debe manejar el servidor, como veremos a continuación:
-
-```typescript
-/ Creamos el servidor.
-net
-  .createServer((connection) => {
-    // Pasamos el socket como argumento al constructor del evento personalizado.
-    const socket = new MessageEventEmitter(connection);
-    // Capturamos el evento message.
-    socket.on("message", (message) => {
-      if (message.operation === "add") {
-        const myCollection = new CardCollection(message.user);
-        const myCard: Card = {
-          id: message.id,
-          name: message.name,
-          mana: message.mana,
-          color: message.color,
-          typeLine: message.typeLine,
-          oddity: message.oddity,
-          rules: message.rules,
-          strength: message.strength,
-          endurance: message.endurance,
-          marketValue: message.marketValue,
-        };
-        myCollection.read((err) => {
-          if (err) {
-            connection.write(JSON.stringify({ result: "error", message: err }));
-            connection.destroy();
-          } else {
-            const myAdder = new AddCard(myCollection);
-            myAdder.add(myCard, (err, data) => {
-              if (err)
-                connection.write(
-                  JSON.stringify({ result: "error", message: err }),
-                );
-              else if (data)
-                connection.write(
-                  JSON.stringify({ result: "success", message: data }),
-                );
-              connection.destroy();
-            });
-          }
+app.get("/cards", (req, res) => {
+  if (!req.query.user) return res.send({type: "error", message: "No se ha indicado usuario"});
+  const user = req.query.user.toString();
+  const myCollection = new CardCollection(user);
+  if (!req.query.id) {
+    return myCollection.read((err) => {
+      if (err) return res.send( {result: "error", message: err} );
+      else {
+        const myLister = new ListCards(myCollection);
+        myLister.list((err, data) => {
+          if (err) return res.send({ result: "error", message: err });
+          return res.send({ result: "success", message: data });
         });
+        return;
+      }
+    })
+  }
+  return myCollection.read((err) => {
+    if (err) return res.send( { result: "error", message: err} );
+    else {
+      const myReader = new ShowCard(myCollection);
+      myReader.showCard(Number(req.query.id?.toString()), ((err, data) => {
+        if (err) return res.send ( {result: "error", message: err} );
+        return res.send({ result: "success", message: data});
+      }));
+      return;
+    }
+  });
+});
+
+app.post("/cards", (req, res) => {
+  if (!req.query.user) return res.send({type: "error", message: "No se ha indicado usuario"});
+  const user = req.query.user.toString();
+  const myCollection = new CardCollection(user);
+  return myCollection.read((err) => {
+      if (err) return res.send( {result: "error", message: err} );
+      else {
+        const myAdder = new AddCard(myCollection);
+        myAdder.add(req.body, (err, data) => {
+          if (err) return res.send({ result: "error", message: err });
+          return res.send({ result: "success", message: data });
+        });
+        return;
+      }
+    })
+});
+
+app.delete("/cards", (req, res) => {
+  if (!req.query.user) return res.send({type: "error", message: "No se ha indicado usuario"});
+  const user = req.query.user.toString();
+  const myCollection = new CardCollection(user);
+  return myCollection.read((err) => {
+      if (err) return res.send( {result: "error", message: err} );
+      else {
+        const myRemover = new DeleteCard(myCollection);
+        myRemover.delete(Number(req.query.id?.toString()), (err, data) => {
+          if (err) return res.send({ result: "error", message: err });
+          return res.send({ result: "success", message: data });
+        });
+        return;
+      }
+    })
+});
+
+app.patch("/cards", (req, res) => {
+  if (!req.query.user) return res.send({type: "error", message: "No se ha indicado usuario"});
+  const user = req.query.user.toString();
+  const myCollection = new CardCollection(user);
+  return myCollection.read((err) => {
+      if (err) return res.send( {result: "error", message: err} );
+      else {
+        const myModifier = new ModifyCard(myCollection);
+        myModifier.modify(req.body, (err, data) => {
+          if (err) return res.send({ result: "error", message: err });
+          return res.send({ result: "success", message: data });
+        });
+        return;
+      }
+    })
+});
+
+app.all("*", (_, res) => {
+  res.status(501).send("Operación no soportada");
+});
+
+
+app.listen(60300, () => {
+  console.log("Server running on port 60300");
+});
 ```
-Para ilustrarlo se ha añadido el controlador de la petición `add`, cuando se recibe el evento "message", se comprueba el tipo de operación, luego se realiza y se envía el resultado de la operación en formato JSON, aprovechándonos de la implementación de las funciones de callback.
+Además, se añade el método `all`, que junto con `*` gestiona las peticiones a operaciones que no están soportadas por la aplicación.
 
-
-Para ilustrar el código cliente de la aplicación, usaremos de ejemplo el comando `list`:
-```typescript
-const client = net.connect({ port: 60300 });
-
-yargs(hideBin(process.argv))
-  .command(
-    "list",
-    "List the cards of a collection",
-    {
-      user: {
-        description: "User of the collection to list",
-        type: "string",
-        demandOption: true,
-      },
-    },
-    (argv) => {
-      client.write(
-        JSON.stringify({
-          operation: "list",
-          user: argv.user,
-        }) + "\n",
-      );
-
-      let fullData = "";
-      client.on("data", (dataChunk) => {
-        fullData += dataChunk;
-      });
-
-      client.on("end", () => {
-        const response = JSON.parse(fullData);
-        if (response.result === "error")
-          console.log(chalk.red(response.message));
-        else if (response.result === "success") {
-          for (const card of response.message) {
-            console.log(
-              `ID: ${card.id}, Nombre: ${card.name}, Mana: ${card.mana}, Color: ${chalk.hex(Correspondencies[card.color])(Colors[card.color])}, TypeLine: ${TypeLines[card.typeLine]}, Rareza: ${Oddities[card.oddity]}, Reglas: ${card.rules}, Fuerza: ${card.strength ?? ""}, Resistencia: ${card.endurance ?? ""}, Lealtad: ${card.loyalty ?? ""}, Valor de mercado: ${card.marketValue}`,
-            );
-          }
-        } else console.log(chalk.red("Ocurrió algún errror"));
-      });
-    },
-  )
-  .help().argv;
-```
-Primero, el cliente debe establecer concxión con el servidor, luego se procesa la línea de comandos, una vez sabemos que queremos realizar un `list`, escribimos la petición, usando el campo `operation` para que el servidor sepa la operación a realizar y dándole los datos necesarios. Cuando el cliente reciba el evento "data", es por que el servidor está introduciendo datos en el socket, como estos datos pueden venir fragmentados, los acumulamos en una variable. Dado que el servidor destruye el socket una vez envía la respuesta, podemos manejar en el cliente el evento "end", que se lanzará, por tanto, cuando se haya dejado de enviar información, así que ya habremos acumulado todos los datos. 
-
-Lo único que falta por hacer es procesar la respuesta, en este caso accedemos al campo `result`, para comprobar si la operación se pudo realizar o no. El mensaje de la respuesta se envía en el campo `message`. Por útimo, se formatea la entrada haciendo uso de `chalk`.
+En este caso, no es necesario código cliente, pues son peticiones a la dirección http, aún así se ilustran algunas:
+* `http://localhost:60300/cards?user=Guille` junto con el método `GET`, devolverá todas las cartas del usuario Guille.
+* `http://localhost:60300/cards?user=Guille` junto con `POST`, insertará la carta que se le pase en el cuerpo de la petición en la colección de Guille.
+* `http://localhost:60300/cards?user=Guille&id=3` usando el metodo `DELETE` eliminará la carta con `id=3`.
+* `http://localhost:60300/cards?user=Guille` junto con `PATCH`, modificará la carta que se le pase en el cuerpo de la petición en la colección de Guille.
 
 ## Ejercicios propuestos en el aula:
+
+Se solicitaba un cambio en dos de las operaciones implementadas, de manera que pasaran de usar el patron callback, a promesas, además de utilizar la API de filesystem de Node en su versión asíncrona basada en promesas. En este caso, se decidió modificar la operación `add` y `delete`:
+
 ```typescript
 import { CardCollection } from "../CardCollection.js";
 import { Card } from "../Card.js";
@@ -451,8 +439,8 @@ export class AddCard {
     });
   }
 }
-
 ```
+Vemos como ahora, la función devuelve una promesa de tipo `string`, dentro de la propia función, se usa los métodos del filesystem basados en promesas, obteniendo si se tuvo éxito o no mediante los métodos `then` y `catch`, y finalmente, dependiendo del flujo de la función, se llama a `resolve` si se tiene éxito y a `reject` si se incumplió la promesa.
 
 ```typescript
 import { CardCollection } from "../CardCollection.js";
@@ -491,12 +479,11 @@ export class DeleteCard {
     });
   }
 }
-
 ```
 
 
 ## Conclusiones:
-La realización de la práctica proporcionó un conocimiento más profundo acerca del patrón petición-respuesta y del manejo de sockets a través de la API "net" de Node. Así como la consoludación de conceptos del lenguaje como Objetos, Clases, interfaces, principios SOLID y sus aplicaciones,sobre patrones de diseño y gestión del sistema de archivos. Además de seguir mejorando la lógica de programación, no solamente aplicada a TypeScript si no a cualquier lenguaje y a continuar prosperando con elementos como el desarrollo basado en pruebas, la generación de documentación automática y el cubrimiento de código.
+La realización de la práctica proporcionó un conocimiento más profundo acerca de la creación de aplicaciones express. Así como la consolidación de conceptos del lenguaje como Objetos, Clases, interfaces, principios SOLID y sus aplicaciones,sobre patrones de diseño y gestión del sistema de archivos. Además de seguir mejorando la lógica de programación, no solamente aplicada a TypeScript si no a cualquier lenguaje y a continuar prosperando con elementos como el desarrollo basado en pruebas, la generación de documentación automática y el cubrimiento de código.
 
 ## Bibliografía
 * [Documentación sobre objetos de Mozzilla](https://developer.mozilla.org/es/docs/Web/JavaScript/Guide/Working_with_objects).
@@ -504,9 +491,8 @@ La realización de la práctica proporcionó un conocimiento más profundo acerc
 * [Documentación de JavaScript de Mozzilla](https://developer.mozilla.org/es/docs/Web/JavaScript).
 * [Documentación de Mocha](https://mochajs.org/).
 * [Documentación de Chai](https://www.chaijs.com/).
-* [Documentación de Chalk](https://github.com/chalk/chalk).
-* [Documentación de Yargs](https://yargs.js.org/).
 * [Documentación de TypeDoc](https://typedoc.org/).
 * [Documentación de Node](https://nodejs.org/docs/latest/api/).
 * [Web de Coveralls](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&cad=rja&uact=8&ved=2ahUKEwj3tsPGj9OEAxWVT6QEHcycA4AQFnoECAcQAQ&url=https%3A%2F%2Fcoveralls.io%2F&usg=AOvVaw2PjKrDGWUgtP9bnQyMWMrr&opi=89978449).
 * [Web de SonarCloud](https://sonarcloud.io/).
+* [Documentación de Express](https://expressjs.com/es/).
