@@ -2,15 +2,12 @@
   "entryPoints": [
     "./src/Card.ts",
     "./src/CardCollection.ts",
-    "./src/client.ts",
     "./src/server.ts",
-    "./src/helpers.ts",
     "./src/operations/AddCard.ts",
     "./src/operations/DeleteCard.ts",
     "./src/operations/ListCards.ts",
     "./src/operations/ModifyCard.ts",
     "./src/operations/ShowCard.ts",
-    "./src/MessageEventEmitter.ts"
   ],
   "out": "./docs"
 }
