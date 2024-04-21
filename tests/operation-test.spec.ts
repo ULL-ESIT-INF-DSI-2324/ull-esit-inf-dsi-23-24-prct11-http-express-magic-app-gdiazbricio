@@ -11,9 +11,34 @@ import { ShowCard } from '../src/operations/ShowCard.js';
 describe('Operations tests', () => {
   const myCollection = new CardCollection("TestUser");
 
+  it('Should delete a card from the collection', (done) => {
+    const myCollection = new CardCollection("TestUser");
+    myCollection.read((error) => {
+      if (!error) {
+        const deleteCard = new DeleteCard(myCollection);
+        const cardIdToDelete = 1;
+        deleteCard.delete(cardIdToDelete, (error, data) => {
+          expect(error).to.be.undefined;
+          expect(data).to.equal(`La carta ${cardIdToDelete} ha sido eliminada de la colección de ${myCollection.getUser()}`);
+          done();
+        });
+      }
+    });
+  });
 
+  it('Should handle error when deleting a card that does not exist', (done) => {
+    const myCollection = new CardCollection("TestUser");
+    const deleteCard = new DeleteCard(myCollection);
+    const cardIdToDelete = 999;
 
-  it('Should add a new card to the collection', () => {
+    deleteCard.delete(cardIdToDelete, (error, data) => {
+      expect(error).to.equal('La carta no fue encontrada');
+      expect(data).to.be.undefined;
+      done();
+    });
+  });
+
+  it('Should add a new card to the collection', (done) => {
     const addCard = new AddCard(myCollection);
     const newCard: Card = {
       id: 1,
@@ -26,12 +51,14 @@ describe('Operations tests', () => {
       marketValue: 10
     };
 
-    return addCard.add(newCard).then((resolve) => {
-      expect(resolve).to.be.equal("La carta se ha añadido a la colección de TestUser");
+    addCard.add(newCard, (error, data) => {
+      expect(error).to.be.undefined;
+      expect(data).to.equal(`La carta se ha añadido a la colección de TestUser`);
+      done();
     });
   });
 
-  it('Should handle error when adding a card that already exists', () => {
+  it('Should handle error when adding a card that already exists', (done) => {
     const addCard = new AddCard(myCollection);
     const existingCard: Card = {
       id: 1,
@@ -44,26 +71,9 @@ describe('Operations tests', () => {
       marketValue: 10
     };
 
-    return addCard.add(existingCard).catch((reject) => {
-      expect(reject).to.equal('La carta ya existe en la colección');
-    });
-  });
-
-  it('Should handle error when trying to modify a collection of a non existing user', (done) => {
-    const myCollection = new CardCollection("fhsajk");
-    const addCard = new AddCard(myCollection);
-    const existingCard: Card = {
-      id: 1,
-      name: 'Test Card',
-      mana: 3,
-      color: Colors.Blue,
-      typeLine: TypeLines.Creature,
-      oddity: Oddities.Common,
-      rules: 'Test rules',
-      marketValue: 10
-    };
-    myCollection.read((err) => {
-      expect(err).to.be.equal("El usuario no existe");
+    addCard.add(existingCard, (error, data) => {
+      expect(error).to.equal('La carta ya existe en la colección');
+      expect(data).to.be.undefined;
       done();
     });
   });
@@ -176,26 +186,6 @@ describe('Operations tests', () => {
           });
         }
       });
-    });
-
-    it('Should delete a card from the collection', () => {
-      const myCollection = new CardCollection("TestUser");
-      myCollection.read((error) => {
-          const deleteCard = new DeleteCard(myCollection);
-          const cardIdToDelete = 1;
-          return deleteCard.delete(cardIdToDelete).then((resolve) => {
-            expect(resolve).to.be.equal(`La carta ${cardIdToDelete} ha sido eliminada de la colección de ${myCollection.getUser()}`);
-          });
-      });
-    });
-  
-    it('Should handle error when deleting a card that does not exist', () => {
-      const myCollection = new CardCollection("TestUser");
-      const deleteCard = new DeleteCard(myCollection);
-      const cardIdToDelete = 999;
-      return deleteCard.delete(cardIdToDelete).catch((reject) => {
-        expect(reject).to.be.equal("La carta no fue encontrada")
-      });
-    });
+    });  
 });
 

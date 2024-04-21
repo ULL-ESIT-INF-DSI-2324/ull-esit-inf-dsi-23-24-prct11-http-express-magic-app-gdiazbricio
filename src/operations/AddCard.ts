@@ -1,6 +1,6 @@
 import { CardCollection } from "../CardCollection.js";
 import { Card } from "../Card.js";
-import { access, writeFile } from "node:fs/promises";
+import { access, writeFile } from "node:fs";
 
 /**
  * Represents an operation to add a card to a collection.
@@ -17,25 +17,25 @@ export class AddCard {
    * @param newCard The card to be added.
    * @param callback A function to be called when finished.
    */
-  add(newCard: Card): Promise<string> {
+  add(
+    newCard: Card,
+    callback: (error: string | undefined, data: string | undefined) => void,
+  ): void {
     const urlPath = `${this.Cards.getUser()}/${newCard.name}.json`;
     const toWrite = JSON.stringify(newCard, null, 2);
-    return new Promise((resolve, reject) => {
-      access(urlPath)
-        .then(() => {
-          reject("La carta ya existe en la colección");
-        })
-        .catch(() => {
-          writeFile(urlPath, toWrite, { flag: "w" })
-            .then(() => {
-              resolve(
-                `La carta se ha añadido a la colección de ${this.Cards.getUser()}`,
-              );
-            })
-            .catch(() => {
-              reject("Error en el servidor");
-            });
+    access(urlPath, (error) => {
+      if (!error) {
+        callback("La carta ya existe en la colección", undefined);
+      } else {
+        writeFile(urlPath, toWrite, { flag: "w" }, (error) => {
+          if (error) callback("Error en el servidor", undefined);
+          else
+            callback(
+              undefined,
+              `La carta se ha añadido a la colección de ${this.Cards.getUser()}`,
+            );
         });
+      }
     });
   }
 }
